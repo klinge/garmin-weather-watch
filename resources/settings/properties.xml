@@ -1,0 +1,9 @@
+<properties>
+
+    <property id="BackgroundColor" type="number">0x000000</property>
+    <property id="ForegroundColor" type="number">0xFF0000</property>
+    <property id="UseMilitaryFormat" type="boolean">false</property>
+    <property id="OwmApi" type="string">9eb325d7d772cdd21ce90111853d5549</property>
+    <property id="OwmStation" type="number">2675397</property>
+
+</properties>
