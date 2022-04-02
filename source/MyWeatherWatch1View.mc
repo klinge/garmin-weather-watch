@@ -47,12 +47,24 @@ class MyWeatherWatch1View extends WatchUi.WatchFace {
         //Update weather
         //get saved values from background
         var weather = Application.getApp().getProperty("OpenWeatherMapCurrent");
-        var tempValue = weather["temp"].format("%.1f").toString();
-        var placeValue = weather["name"];
-        var descValue = weather["des"];
-        var windSpeedValue = weather["windSpeed"].format("%.1f");
-        var windDirValue = weather["windDirect"].format("%03i");
-        var windString = windSpeedValue + " m/s (" + windDirValue + ")";
+        
+        //initialize weather variables
+        var tempValue = "-";
+        var placeValue = "-";
+        var descValue = "-";
+        var windSpeedValue = "-";
+        var windDirValue = "-";
+        var windString = "-";
+
+        //update them with actual values if we have them
+        if( weather != null ) {
+            tempValue = weather["temp"].format("%.1f").toString();
+            placeValue = weather["name"];
+            descValue = weather["des"];
+            windSpeedValue = weather["windSpeed"].format("%.1f");
+            windDirValue = weather["windDirect"].format("%03i");
+            windString = windSpeedValue + " m/s (" + windDirValue + ")";
+        }
 
         //update watchface
         var temp = View.findDrawableById("TempDisplay") as Text;
