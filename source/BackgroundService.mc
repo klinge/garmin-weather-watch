@@ -23,7 +23,7 @@ class BackgroundService extends System.ServiceDelegate {
     	{
 			//get apikey
 			var api_key = Application.getApp().getProperty("OwmApi");
-			if (api_key.length() == 0) {
+			if (api_key.length() != 32) {
 				api_key = "9eb325d7d772cdd21ce90111853d5549"; // default apikey
 			}
 			System.println("OWM Key: " + api_key);
