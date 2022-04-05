@@ -54,6 +54,7 @@ class MyWeatherWatch1View extends WatchUi.WatchFace {
         var descValue = "-";
         var windSpeedValue = "-";
         var windDirValue = "-";
+        var windDirAbbr = "";
         var windString = "-";
 
         //update them with actual values if we have them
@@ -62,8 +63,9 @@ class MyWeatherWatch1View extends WatchUi.WatchFace {
             placeValue = weather["name"];
             descValue = weather["des"];
             windSpeedValue = weather["windSpeed"].format("%.1f");
-            windDirValue = weather["windDirect"].format("%03i");
-            windString = windSpeedValue + " m/s (" + windDirValue + ")";
+            //windDirValue = weather["windDirect"].format("%03i");
+            windDirAbbr = weather["windDirectAbbr"];
+            windString = windSpeedValue + " m/s (" + windDirAbbr + ")";
         }
 
         //update watchface

@@ -29,19 +29,13 @@ class BackgroundService extends System.ServiceDelegate {
 			System.println("OWM Key: " + api_key);
 			//get station for weather
 			var owm_station = Application.getApp().getProperty("OwmStation");
-			System.println("Getting data for station: " + owm_station);
 
-			makeWebRequest(
-				"https://api.openweathermap.org/data/2.5/weather",
-				{
-					//"lat" => Application.getApp().getProperty("LastLocationLat"),
-					//"lon" => Application.getApp().getProperty("LastLocationLng"),
-					"id" => owm_station,
-					"appid" => api_key,
-					"units" => "metric" // Celcius.
-				},
-				method(:onReceiveOpenWeatherMapCurrent)
-			);
+			if(owm_station != 0){
+				getWeatherForStation(owm_station, api_key);
+			}
+			else {
+				getWeatherForCoords(api_key);
+			}
 		}
 		catch(ex)
 		{
@@ -50,7 +44,35 @@ class BackgroundService extends System.ServiceDelegate {
 			result.put("temporalEventError", errorMessage);
 			Background.exit(result); 
 		}		
+	}
 
+	(:background_method)
+	function getWeatherForStation(owm_station, api_key) {
+		System.println("Getting data for station: " + owm_station);
+		makeWebRequest(
+			"https://api.openweathermap.org/data/2.5/weather",
+			{
+				"id" => owm_station,
+				"appid" => api_key,
+				"units" => "metric" // Celcius.
+			},
+			method(:onReceiveOpenWeatherMapCurrent)
+		);
+	}
+
+	(:background_method)
+	function getWeatherForCoords(api_key) {
+		System.println("Getting data for last known coordinates");
+		makeWebRequest(
+			"https://api.openweathermap.org/data/2.5/weather",
+			{
+				"lat" => Application.getApp().getProperty("LastLocationLat"),
+				"lon" => Application.getApp().getProperty("LastLocationLng"),
+				"appid" => api_key,
+				"units" => "metric" // Celcius.
+			},
+			method(:onReceiveOpenWeatherMapCurrent)
+		);
 	}
 
 	(:background_method)
