@@ -142,18 +142,26 @@ class BackgroundService extends System.ServiceDelegate {
 
 	(:background_method)
 	function onReceiveSLData(responseCode, data) {
-		System.println("Starting callback onReceiveSLData()");
-		System.println("In onReceiveSLData() callback. Response code was: " + responseCode);
-		System.println("In onReceiveSLData() callback. Result is: " + data);
-
 		// Useful data only available if result was successful.
 		// Filter and flatten data response for data that we actually need.
+		var slResult = [];
 		if (responseCode == 200) {
-			result = {
-				"allDepartures" => data["Departure"]
-			};
+			var filteredData = data["ResponseData"]["Trains"];
+			var tempRow = {};
+			var numRows = ( filteredData.size() > 4 ) ? 4 : filteredData.size();
+
+			for(var i = 0; i < numRows; i++) {
+				tempRow = {
+					"time" => filteredData[i]["ExpectedDateTime"],
+					"line" =>filteredData[i]["LineNumber"],
+					"dest" => filteredData[i]["Destination"],
+					"displayTime" => filteredData[i]["DisplayTime"]
+				};
+				slResult.add(tempRow);
+			}
 		} 
 		else {  //HTTP error
+			//TODO error result can't be a Dict, needs to be changed to slResult array... 
 			var errorMessage = "";
 			if(data != null) {
 				errorMessage = data["StatusCode"];
@@ -164,15 +172,13 @@ class BackgroundService extends System.ServiceDelegate {
 			};
 		}
 		Background.exit( 
-			{ "SLDepartures" => result } 
+			{ "SLDepartures" => slResult } 
 		);
 	
 	}
 
 	(:background_method)
 	function makeWebRequest(url, params, callback) {
-		System.println("In makeWebRequest(). URL is: " + url);
-		System.println("In makeWebRequest(). params is: " + params);
         var options = {
 			:method => Communications.HTTP_REQUEST_METHOD_GET,
 			:headers => {
