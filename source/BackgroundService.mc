@@ -18,24 +18,12 @@ class BackgroundService extends System.ServiceDelegate {
 	// Pending web request flag will be cleared only once the background data has been successfully received.
 	(:background_method)
 	function onTemporalEvent() {
+
 		System.println("Started onTemporalEvent..");
 		try
     	{
-			//get apikey
-			var api_key = Application.getApp().getProperty("OwmApi");
-			if (api_key.length() != 32) {
-				api_key = "9eb325d7d772cdd21ce90111853d5549"; // default apikey
-			}
-			System.println("OWM Key: " + api_key);
-			//get station for weather
-			var owm_station = Application.getApp().getProperty("OwmStation");
-
-			if(owm_station != 0){
-				getWeatherForStation(owm_station, api_key);
-			}
-			else {
-				getWeatherForCoords(api_key);
-			}
+			getWeather(); 
+			getSLDepartures();
 		}
 		catch(ex)
 		{
@@ -44,6 +32,32 @@ class BackgroundService extends System.ServiceDelegate {
 			result.put("temporalEventError", errorMessage);
 			Background.exit(result); 
 		}		
+	}
+
+	(:background_method)
+	function getWeather() {
+		//get apikey
+		var api_key = Application.getApp().getProperty("OwmApi");
+		if (api_key.length() != 32) {
+			api_key = "9eb325d7d772cdd21ce90111853d5549"; // default apikey
+		}
+		System.println("OWM Key: " + api_key);
+		//get station for weather
+		var owm_station = Application.getApp().getProperty("OwmStation");
+		//depending on if a station number or 
+		if(owm_station != 0){
+			getWeatherForStation(owm_station, api_key);
+		}
+		else {
+			getWeatherForCoords(api_key);
+		}
+	}
+
+	(:background_method)
+	function getSLDepartures() {
+		System.println("In getCommuterTraffic()");
+		result.put("SLDepartures", {"message" => "To be implemented"} );
+		Background.exit(result); 
 	}
 
 	(:background_method)
