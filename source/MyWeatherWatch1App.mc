@@ -91,7 +91,8 @@ class MyWeatherWatch1App extends Application.AppBase {
         }
         //SECOND: handle SL data
         else if(type.equals("SLDepartures")) {
-            System.println("TODO implement handling of SL data.");
+            //save the data
+            setProperty(type, receivedData);
         }
         //LAST: if other type something bas has happened.. 
         else {
