@@ -22,6 +22,7 @@ class BackgroundService extends System.ServiceDelegate {
 		System.println("Started onTemporalEvent..");
 		try
     	{
+			//TODO implement solution to handle different requests
 			//getWeather(); 
 			getSLDepartures();
 		}
@@ -66,7 +67,8 @@ class BackgroundService extends System.ServiceDelegate {
 				"siteid" => station,
 				"timewindow" => timeDuration,
 				"key" => apiKey,
-				"bus" => "false"
+				"bus" => "false",
+				"tram" => "false"
 			},
 			method(:onReceiveSLData)
 		);
@@ -144,10 +146,10 @@ class BackgroundService extends System.ServiceDelegate {
 	function onReceiveSLData(responseCode, data) {
 		// Useful data only available if result was successful.
 		// Filter and flatten data response for data that we actually need.
-		var slResult = [];
 		if (responseCode == 200) {
 			var filteredData = data["ResponseData"]["Trains"];
 			var tempRow = {};
+			var rowsArray = [];
 			var numRows = ( filteredData.size() > 4 ) ? 4 : filteredData.size();
 
 			for(var i = 0; i < numRows; i++) {
@@ -157,11 +159,11 @@ class BackgroundService extends System.ServiceDelegate {
 					"dest" => filteredData[i]["Destination"],
 					"displayTime" => filteredData[i]["DisplayTime"]
 				};
-				slResult.add(tempRow);
+				rowsArray.add(tempRow);
 			}
+			result.put("CurrentDepartures", rowsArray);
 		} 
 		else {  //HTTP error
-			//TODO error result can't be a Dict, needs to be changed to slResult array... 
 			var errorMessage = "";
 			if(data != null) {
 				errorMessage = data["StatusCode"];
@@ -172,7 +174,7 @@ class BackgroundService extends System.ServiceDelegate {
 			};
 		}
 		Background.exit( 
-			{ "SLDepartures" => slResult } 
+			{ "SLDepartures" => result } 
 		);
 	
 	}
