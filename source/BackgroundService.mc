@@ -22,7 +22,7 @@ class BackgroundService extends System.ServiceDelegate {
 		System.println("Started onTemporalEvent..");
 		try
     	{
-			getWeather(); 
+			//getWeather(); 
 			getSLDepartures();
 		}
 		catch(ex)
@@ -55,9 +55,21 @@ class BackgroundService extends System.ServiceDelegate {
 
 	(:background_method)
 	function getSLDepartures() {
-		System.println("In getCommuterTraffic()");
-		result.put("SLDepartures", {"message" => "To be implemented"} );
-		Background.exit(result); 
+		System.println("In getSLDepartures()");
+		var station = "740000759";
+		var apiKey = "daa594c6-6756-49f9-9876-7a2ca7dec027";
+		var timeDuration = "20";
+		
+		makeWebRequest(
+			"https://api.resrobot.se/v2.1/departureBoard",
+			{
+				"id" => station,
+				"duration" => timeDuration,
+				"accessId" => apiKey,
+				"format" => "json"
+			},
+			method(:onReceiveSLData)
+		);
 	}
 
 	(:background_method)
@@ -92,7 +104,7 @@ class BackgroundService extends System.ServiceDelegate {
 	(:background_method)
 	function onReceiveOpenWeatherMapCurrent(responseCode, data) {
 		
-		System.println("Starting callback onReceiveOpenWeatherMapCurrent");
+		System.println("Starting callback onReceiveOpenWeatherMapCurrent()");
 		
 		// Useful data only available if result was successful.
 		// Filter and flatten data response for data that we actually need.
@@ -123,15 +135,44 @@ class BackgroundService extends System.ServiceDelegate {
 				"message" => data["message"]
 			};
 		}
-
 		Background.exit( 
 			{ "OpenWeatherMapCurrent" => result } 
 		);
 	}
 
 	(:background_method)
+	function onReceiveSLData(responseCode, data) {
+		System.println("Starting callback onReceiveSLData()");
+		System.println("In onReceiveSLData() callback. Response code was: " + responseCode);
+		System.println("In onReceiveSLData() callback. Result is: " + data);
+
+		// Useful data only available if result was successful.
+		// Filter and flatten data response for data that we actually need.
+		if (responseCode == 200) {
+			result = {
+				"allDepartures" => data["Departure"]
+			};
+		} 
+		else {  //HTTP error
+			var errorMessage = "";
+			if(data != null) {
+				errorMessage = data["errorText"];
+			}
+			result = {
+				"httpError" => responseCode,
+				"message" => errorMessage
+			};
+		}
+		Background.exit( 
+			{ "SLDepartures" => result } 
+		);
+	
+	}
+
+	(:background_method)
 	function makeWebRequest(url, params, callback) {
-		System.println("Starting makeWebRequest");
+		System.println("In makeWebRequest(). URL is: " + url);
+		System.println("In makeWebRequest(). params is: " + params);
         var options = {
 			:method => Communications.HTTP_REQUEST_METHOD_GET,
 			:headers => {

@@ -57,7 +57,7 @@ class MyWeatherWatch1App extends Application.AppBase {
 		// No value in showing any HTTP error to the user, so no need to modify stored data.
 		// Leave pendingWebRequests flag set, and simply return early.
 		if (receivedData["httpError"]) {
-			System.println("httpError: " + receivedData);
+			System.println("In onBackgroundData(). httpError: " + receivedData);
             return;
 		}
         //check what type of data we got
