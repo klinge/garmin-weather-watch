@@ -56,17 +56,17 @@ class BackgroundService extends System.ServiceDelegate {
 	(:background_method)
 	function getSLDepartures() {
 		System.println("In getSLDepartures()");
-		var station = "740000759";
-		var apiKey = "daa594c6-6756-49f9-9876-7a2ca7dec027";
+		var station = "9509";
+		var apiKey = "43db3f9f91e541a68ffbb1f35784c813";
 		var timeDuration = "20";
 		
 		makeWebRequest(
-			"https://api.resrobot.se/v2.1/departureBoard",
+			"https://api.sl.se/api2/realtimedeparturesV4.json",
 			{
-				"id" => station,
-				"duration" => timeDuration,
-				"accessId" => apiKey,
-				"format" => "json"
+				"siteid" => station,
+				"timewindow" => timeDuration,
+				"key" => apiKey,
+				"bus" => "false"
 			},
 			method(:onReceiveSLData)
 		);
@@ -156,7 +156,7 @@ class BackgroundService extends System.ServiceDelegate {
 		else {  //HTTP error
 			var errorMessage = "";
 			if(data != null) {
-				errorMessage = data["errorText"];
+				errorMessage = data["StatusCode"];
 			}
 			result = {
 				"httpError" => responseCode,
