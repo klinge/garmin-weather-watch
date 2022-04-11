@@ -18,24 +18,13 @@ class BackgroundService extends System.ServiceDelegate {
 	// Pending web request flag will be cleared only once the background data has been successfully received.
 	(:background_method)
 	function onTemporalEvent() {
+
 		System.println("Started onTemporalEvent..");
 		try
     	{
-			//get apikey
-			var api_key = Application.getApp().getProperty("OwmApi");
-			if (api_key.length() != 32) {
-				api_key = "9eb325d7d772cdd21ce90111853d5549"; // default apikey
-			}
-			System.println("OWM Key: " + api_key);
-			//get station for weather
-			var owm_station = Application.getApp().getProperty("OwmStation");
-
-			if(owm_station != 0){
-				getWeatherForStation(owm_station, api_key);
-			}
-			else {
-				getWeatherForCoords(api_key);
-			}
+			//TODO implement solution to handle different requests
+			//getWeather(); 
+			getSLDepartures();
 		}
 		catch(ex)
 		{
@@ -44,6 +33,45 @@ class BackgroundService extends System.ServiceDelegate {
 			result.put("temporalEventError", errorMessage);
 			Background.exit(result); 
 		}		
+	}
+
+	(:background_method)
+	function getWeather() {
+		//get apikey
+		var api_key = Application.getApp().getProperty("OwmApi");
+		if (api_key.length() != 32) {
+			api_key = "9eb325d7d772cdd21ce90111853d5549"; // default apikey
+		}
+		System.println("OWM Key: " + api_key);
+		//get station for weather
+		var owm_station = Application.getApp().getProperty("OwmStation");
+		//depending on if a station number or 
+		if(owm_station != 0){
+			getWeatherForStation(owm_station, api_key);
+		}
+		else {
+			getWeatherForCoords(api_key);
+		}
+	}
+
+	(:background_method)
+	function getSLDepartures() {
+		System.println("In getSLDepartures()");
+		var station = "9509";
+		var apiKey = "43db3f9f91e541a68ffbb1f35784c813";
+		var timeDuration = "20";
+		
+		makeWebRequest(
+			"https://api.sl.se/api2/realtimedeparturesV4.json",
+			{
+				"siteid" => station,
+				"timewindow" => timeDuration,
+				"key" => apiKey,
+				"bus" => "false",
+				"tram" => "false"
+			},
+			method(:onReceiveSLData)
+		);
 	}
 
 	(:background_method)
@@ -78,7 +106,7 @@ class BackgroundService extends System.ServiceDelegate {
 	(:background_method)
 	function onReceiveOpenWeatherMapCurrent(responseCode, data) {
 		
-		System.println("Starting callback onReceiveOpenWeatherMapCurrent");
+		System.println("Starting callback onReceiveOpenWeatherMapCurrent()");
 		
 		// Useful data only available if result was successful.
 		// Filter and flatten data response for data that we actually need.
@@ -109,15 +137,50 @@ class BackgroundService extends System.ServiceDelegate {
 				"message" => data["message"]
 			};
 		}
-
 		Background.exit( 
 			{ "OpenWeatherMapCurrent" => result } 
 		);
 	}
 
 	(:background_method)
+	function onReceiveSLData(responseCode, data) {
+		// Useful data only available if result was successful.
+		// Filter and flatten data response for data that we actually need.
+		if (responseCode == 200) {
+			var filteredData = data["ResponseData"]["Trains"];
+			var tempRow = {};
+			var rowsArray = [];
+			var numRows = ( filteredData.size() > 4 ) ? 4 : filteredData.size();
+
+			for(var i = 0; i < numRows; i++) {
+				tempRow = {
+					"time" => filteredData[i]["ExpectedDateTime"],
+					"line" =>filteredData[i]["LineNumber"],
+					"dest" => filteredData[i]["Destination"],
+					"displayTime" => filteredData[i]["DisplayTime"]
+				};
+				rowsArray.add(tempRow);
+			}
+			result.put("CurrentDepartures", rowsArray);
+		} 
+		else {  //HTTP error
+			var errorMessage = "";
+			if(data != null) {
+				errorMessage = data["StatusCode"];
+			}
+			result = {
+				"httpError" => responseCode,
+				"message" => errorMessage
+			};
+		}
+		Background.exit( 
+			{ "SLDepartures" => result } 
+		);
+	
+	}
+
+	(:background_method)
 	function makeWebRequest(url, params, callback) {
-		System.println("Starting makeWebRequest");
         var options = {
 			:method => Communications.HTTP_REQUEST_METHOD_GET,
 			:headers => {

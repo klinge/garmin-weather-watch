@@ -51,45 +51,60 @@ class MyWeatherWatch1App extends Application.AppBase {
 		//System.println("onBackgroundData() called");
         var type = data.keys()[0];
         var receivedData = data[type];
+        System.println("Type of result: " + type);
+        System.println("Received data: " + receivedData);
 
 		// No value in showing any HTTP error to the user, so no need to modify stored data.
 		// Leave pendingWebRequests flag set, and simply return early.
 		if (receivedData["httpError"]) {
-			System.println("httpError: " + receivedData);
+			System.println("In onBackgroundData(). httpError: " + receivedData);
             return;
 		}
-        System.println("Type of result: " + type);
-        System.println("Received data: " + receivedData);
-        
-        //convert wind direction in degrees to an alphabetic abbreviation
-        var currentWindDeg = receivedData["windDirect"];
-        var windDirAbbrArray = [ "N", "NE", "E", "SE", "S", "SW", "W", "NW" ];
+        //check what type of data we got
+        //FIRST: handle weather data
+        if(type.equals("OpenWeatherMapCurrent")) {
+            //convert wind direction in degrees to an alphabetic abbreviation
+            var currentWindDeg = receivedData["windDirect"];
+            var windDirAbbrArray = [ "NE", "E", "SE", "E", "SW", "W", "NW", "N" ];
 
-        var adjustedWindDeg = currentWindDeg + 22.5;
-        if (adjustedWindDeg > 360) {
-            adjustedWindDeg = adjustedWindDeg - 360;
+            //handle special case for first 45 degrees / 2, set to North and be done with it
+            if(currentWindDeg <= 22.5 ) {
+                receivedData["windDirectAbbr"] = windDirAbbrArray[7];
+            } else {
+                //then walk through the compass circle in 45 degree pieces and find out which has the current wind direction
+                for (var i = 0; i < windDirAbbrArray.size(); i++) {    
+                    var lowLimit = i*45 + 22.5;
+                    var highLimit = (i+1)*45 + 22.5;
+                    if (currentWindDeg > lowLimit && currentWindDeg <= highLimit ) {
+                        receivedData["windDirectAbbr"] = windDirAbbrArray[i];
+                        break;
+                    }
+                }
+            }
+            //save the modified data
+            setProperty(type, receivedData);
+            //if we have no location set it to the last coordinates from openweathermap.. 
+            if (getProperty("LastLocationLat") == null) {
+                setProperty("LastLocationLat", receivedData["lat"].toFloat());
+                setProperty("LastLocationLng", receivedData["lon"].toFloat());
+            }
         }
-        
-        var i = Math.floor(adjustedWindDeg / 45).toNumber();
-        var windName = windDirAbbrArray[i];
-        System.println("Wind dir and name: " + adjustedWindDeg + " - " + windName);
-        receivedData["windDirectAbbr"] = windName;
-
-        //save the data
-        setProperty(type, receivedData);
-        
-        //if we have no location set it to the last coordinates from openweathermap.. 
-        if (getProperty("LastLocationLat") == null) {
-            setProperty("LastLocationLat", receivedData["lat"].toFloat());
-            setProperty("LastLocationLng", receivedData["lon"].toFloat());
+        //SECOND: handle SL data
+        else if(type.equals("SLDepartures")) {
+            //save the data
+            setProperty(type, receivedData);
         }
+        //LAST: if other type something bas has happened.. 
+        else {
+            System.println("Bad type of data from background service.");
+        }
+        //AND update watchface before finishing.. 
         WatchUi.requestUpdate();
     }
 	
 
     // Register for temporal events.. 
-    function InitBackgroundEvents()
-    {
+    function InitBackgroundEvents() {
         getLocation();
         if(Toybox.System has :ServiceDelegate) {
             var FIVE_MINUTES = new Toybox.Time.Duration(5 * 60);
