@@ -63,22 +63,17 @@ class MyWeatherWatch1App extends Application.AppBase {
         
         //convert wind direction in degrees to an alphabetic abbreviation
         var currentWindDeg = receivedData["windDirect"];
-        var windDirAbbrArray = [ "NE", "E", "SE", "E", "SW", "W", "NW", "N" ];
+        var windDirAbbrArray = [ "N", "NE", "E", "SE", "S", "SW", "W", "NW" ];
 
-        //handle special case for first 45 degrees / 2, set to North and be done with it
-        if(currentWindDeg <= 22.5 ) {
-            receivedData["windDirectAbbr"] = windDirAbbrArray[7];
-        } else {
-            //then walk through the compass circle in 45 degree pieces and find out which has the current wind direction
-            for (var i = 0; i < windDirAbbrArray.size(); i++) {    
-                var lowLimit = i*45 + 22.5;
-                var highLimit = (i+1)*45 + 22.5;
-                if (currentWindDeg > lowLimit && currentWindDeg <= highLimit ) {
-                    receivedData["windDirectAbbr"] = windDirAbbrArray[i];
-                    break;
-                }
-            }
+        var adjustedWindDeg = currentWindDeg + 22.5;
+        if (adjustedWindDeg > 360) {
+            adjustedWindDeg = adjustedWindDeg - 360;
         }
+        
+        var i = Math.floor(adjustedWindDeg / 45).toNumber();
+        var windName = windDirAbbrArray[i];
+        System.println("Wind dir and name: " + adjustedWindDeg + " - " + windName);
+        receivedData["windDirectAbbr"] = windName;
 
         //save the data
         setProperty(type, receivedData);
